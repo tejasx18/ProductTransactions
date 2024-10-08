@@ -3,11 +3,12 @@ import dotenv from 'dotenv';
 import sequelize from './config/db.js';
 import seedRoutes from './routes/seedRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
-
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+app.use(cors());
 
 // Connection to the database
 try {
@@ -23,8 +24,6 @@ try {
 app.use('/api', seedRoutes);
 app.use('/api', transactionRoutes);
 
-
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

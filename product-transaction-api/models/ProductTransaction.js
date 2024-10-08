@@ -8,6 +8,7 @@ const ProductTransaction = sequelize.define('ProductTransaction', {
   category: DataTypes.STRING,
   dateOfSale: DataTypes.DATE,
   sold: DataTypes.BOOLEAN,
+  image: DataTypes.STRING,
 });
 
 export default ProductTransaction;

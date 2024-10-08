@@ -3,42 +3,40 @@ import { Op } from 'sequelize';
 import { statistics } from '../models/statistics.js';
 import {barchart} from '../models/barchart.js';
 import { piechart } from '../models/piechart.js';
+import sequelize from '../config/db.js';
 
 export const getTransactions = async (req, res) => {
-  const { page = 1, perPage = 10, search = '' } = req.query;
+  const { page = 1, perPage = 10, search = '', month = 'march' } = req.query;
+  const monthNumber = new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
   try {
     const whereClause = {
-      [Op.or]: [],
+      [Op.and]: [
+        sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM "dateOfSale"')), monthNumber),
+      ],
     };
 
-    let transactions;
-
     if (search) {
-      whereClause[Op.or].push(
+      whereClause[Op.or] = [
         { title: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } }
-      );
+        { description: { [Op.iLike]: `%${search}%` } },
+      ];
+
       const priceSearch = parseFloat(search);
       if (!isNaN(priceSearch)) {
         whereClause[Op.or].push({ price: priceSearch });
       }
-       transactions = await ProductTransaction.findAndCountAll({
-        where: whereClause,
-        limit: perPage,
-        offset: (page - 1) * perPage,
-      });
     }
-    else {
-       transactions = await ProductTransaction.findAndCountAll({
-        limit: perPage,
-        offset: (page - 1) * perPage,
-      });
-    }
+
+    const transactions = await ProductTransaction.findAndCountAll({
+      where: whereClause,
+      limit: perPage,
+      offset: (page - 1) * perPage,
+    });
 
     res.status(200).json({
       totalItems: transactions.count,
       totalPages: Math.ceil(transactions.count / perPage),
-      currentPage: page,
+      currentPage: page ,
       transactions: transactions.rows,
     });
   } catch (error) {
@@ -46,7 +44,6 @@ export const getTransactions = async (req, res) => {
     res.status(500).json({ message: 'Error fetching transactions', error });
   }
 };
-
 
 export const getStatistics = async (req, res) => {
   const { month } = req.params; 
